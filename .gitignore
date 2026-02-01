@@ -1,0 +1,5 @@
+.gomodcache/
+frontend/node_modules/
+frontend/.next/
+frontend/.pnpm-store/
+frontend/.cache/

@@ -1,0 +1,251 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 13%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 13%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 13%;
+
+    --primary: 210 10% 23%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 14% 95%;
+    --secondary-foreground: 0 0% 13%;
+
+    --muted: 210 14% 95%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 210 14% 92%;
+    --accent-foreground: 0 0% 13%;
+
+    --destructive: 0 65% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 70% 35%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 13%;
+
+    --border: 0 0% 85%;
+    --input: 0 0% 85%;
+    --ring: 210 10% 40%;
+
+    --radius: 0.25rem;
+
+    /* App-specific tokens */
+    --topbar-height: 42px;
+    --sidebar-width: 240px;
+    --sidebar-collapsed-width: 0px;
+    --bottom-panel-height: 160px;
+    --bottom-panel-collapsed-height: 28px;
+
+    --topbar-bg: 210 14% 97%;
+    --sidebar-bg: 210 14% 97%;
+    --workspace-bg: 0 0% 100%;
+    --panel-bg: 210 14% 97%;
+    --table-header-bg: 210 14% 94%;
+    --table-row-hover: 210 14% 97%;
+    --table-row-alt: 210 14% 99%;
+    --tree-item-hover: 210 14% 92%;
+    --tree-item-active: 210 40% 90%;
+    --tab-active-border: 210 70% 50%;
+    --status-online: 142 70% 45%;
+    --status-offline: 0 0% 60%;
+    --editor-bg: 0 0% 100%;
+    --editor-line-bg: 210 14% 97%;
+  }
+
+  .dark {
+    --background: 0 0% 10%;
+    --foreground: 0 0% 90%;
+
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 90%;
+
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 90%;
+
+    --primary: 210 14% 80%;
+    --primary-foreground: 0 0% 10%;
+
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 90%;
+
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 55%;
+
+    --accent: 0 0% 20%;
+    --accent-foreground: 0 0% 90%;
+
+    --destructive: 0 60% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 25%;
+    --input: 0 0% 25%;
+    --ring: 210 10% 60%;
+
+    --topbar-bg: 0 0% 12%;
+    --sidebar-bg: 0 0% 12%;
+    --workspace-bg: 0 0% 10%;
+    --panel-bg: 0 0% 12%;
+    --table-header-bg: 0 0% 15%;
+    --table-row-hover: 0 0% 15%;
+    --table-row-alt: 0 0% 11%;
+    --tree-item-hover: 0 0% 18%;
+    --tree-item-active: 210 30% 20%;
+    --editor-bg: 0 0% 8%;
+    --editor-line-bg: 0 0% 12%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 13px;
+  }
+}
+
+@layer components {
+  .app-topbar {
+    @apply h-[var(--topbar-height)] border-b flex items-center px-3 gap-4;
+    background: hsl(var(--topbar-bg));
+  }
+
+  .app-sidebar {
+    @apply border-r overflow-hidden flex flex-col;
+    background: hsl(var(--sidebar-bg));
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+  }
+
+  .app-sidebar.collapsed {
+    width: var(--sidebar-collapsed-width);
+    min-width: var(--sidebar-collapsed-width);
+  }
+
+  .app-workspace {
+    @apply flex-1 overflow-hidden flex flex-col;
+    background: hsl(var(--workspace-bg));
+  }
+
+  .app-bottom-panel {
+    @apply border-t overflow-hidden flex flex-col;
+    background: hsl(var(--panel-bg));
+    height: var(--bottom-panel-height);
+  }
+
+  .app-bottom-panel.collapsed {
+    height: var(--bottom-panel-collapsed-height);
+  }
+
+  .tree-item {
+    @apply flex items-center gap-1.5 px-2 py-1 cursor-pointer text-sm select-none;
+  }
+
+  .tree-item:hover {
+    background: hsl(var(--tree-item-hover));
+  }
+
+  .tree-item.active {
+    background: hsl(var(--tree-item-active));
+  }
+
+  .data-table {
+    @apply w-full text-sm border-collapse;
+  }
+
+  .data-table th {
+    @apply text-left font-medium px-3 py-2 border-b border-r last:border-r-0;
+    background: hsl(var(--table-header-bg));
+  }
+
+  .data-table td {
+    @apply px-3 py-1.5 border-b border-r last:border-r-0;
+  }
+
+  .data-table tr:nth-child(even) td {
+    background: hsl(var(--table-row-alt));
+  }
+
+  .data-table tr:hover td {
+    background: hsl(var(--table-row-hover));
+  }
+
+  .tab-button {
+    @apply px-4 py-2 text-sm border-b-2 border-transparent;
+  }
+
+  .tab-button:hover {
+    background: hsl(var(--accent));
+  }
+
+  .tab-button.active {
+    border-bottom-color: hsl(var(--tab-active-border));
+    font-weight: 500;
+  }
+
+  .query-editor {
+    @apply w-full h-full resize-none p-3 font-mono text-sm border-0 outline-none;
+    background: hsl(var(--editor-bg));
+  }
+
+  .toolbar-button {
+    @apply px-3 py-1 text-sm border rounded flex items-center gap-1.5;
+    background: hsl(var(--background));
+  }
+
+  .toolbar-button:hover {
+    background: hsl(var(--accent));
+  }
+
+  .toolbar-button:active {
+    background: hsl(var(--muted));
+  }
+
+  .status-indicator {
+    @apply w-2 h-2 rounded-full;
+  }
+
+  .status-indicator.online {
+    background: hsl(var(--status-online));
+  }
+
+  .status-indicator.offline {
+    background: hsl(var(--status-offline));
+  }
+
+  .panel-header {
+    @apply flex items-center justify-between px-3 py-1 border-b text-xs font-medium uppercase tracking-wide;
+    background: hsl(var(--table-header-bg));
+    color: hsl(var(--muted-foreground));
+  }
+
+  .log-entry {
+    @apply font-mono text-xs px-3 py-1 border-b;
+  }
+
+  .log-entry.error {
+    @apply text-destructive bg-destructive/5;
+  }
+
+  .log-entry.success {
+    color: hsl(var(--success));
+  }
+
+  .dropdown-select {
+    @apply px-2 py-1 text-sm border rounded bg-background;
+  }
+}
