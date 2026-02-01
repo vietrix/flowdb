@@ -1,0 +1,10 @@
+# frontend/.dockerignore
+node_modules
+.next
+.git
+.turbo
+dist
+build
+npm-debug.log
+pnpm-debug.log
+*.log

@@ -62,7 +62,12 @@ async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     }
   }
   if (!res.ok) {
-    const message = typeof data === "string" ? data : data?.message || res.statusText;
+    const message =
+      typeof data === "string"
+        ? data
+        : data && typeof data === "object" && "message" in data
+        ? String((data as { message?: unknown }).message || res.statusText)
+        : res.statusText;
     throw new Error(message);
   }
   return data as T;
