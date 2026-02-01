@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RefreshCw, Sparkles, TerminalSquare, FlaskConical } from "lucide-react";
 
 interface Column {
   key: string;
@@ -14,6 +14,9 @@ interface DataViewerProps {
   totalRows: number;
   onPageChange: (page: number) => void;
   onRefresh: () => void;
+  onOpenQuery: () => void;
+  onOpenVisual: () => void;
+  onExplain: () => void;
 }
 
 export function DataViewer({
@@ -25,19 +28,38 @@ export function DataViewer({
   totalRows,
   onPageChange,
   onRefresh,
+  onOpenQuery,
+  onOpenVisual,
+  onExplain,
 }: DataViewerProps) {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-2 border-b bg-secondary/30">
-        <div className="text-sm">
+      <div className="flex flex-wrap items-center gap-2 px-3 py-2 border-b bg-secondary/30">
+        <div className="text-sm flex items-center gap-2">
           <span className="font-medium">{tableName}</span>
-          <span className="text-muted-foreground ml-2">({totalRows} rows)</span>
+          <span className="text-muted-foreground">({totalRows} rows)</span>
         </div>
-        
-        <button className="toolbar-button" onClick={onRefresh}>
-          <RefreshCw size={12} />
-          <span>Refresh</span>
-        </button>
+
+        <div className="flex-1" />
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button className="toolbar-button" onClick={onOpenQuery}>
+            <TerminalSquare size={12} />
+            <span>Query</span>
+          </button>
+          <button className="toolbar-button" onClick={onExplain}>
+            <FlaskConical size={12} />
+            <span>Explain</span>
+          </button>
+          <button className="toolbar-button" onClick={onOpenVisual}>
+            <Sparkles size={12} />
+            <span>Visual</span>
+          </button>
+          <button className="toolbar-button" onClick={onRefresh}>
+            <RefreshCw size={12} />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
       
       <div className="flex-1 overflow-auto">

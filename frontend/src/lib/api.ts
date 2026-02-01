@@ -235,6 +235,13 @@ export async function startQuery(
   });
 }
 
+export async function explainQuery(connectionId: string, statement: string) {
+  return apiFetch<Record<string, unknown>>(`/api/v1/connections/${connectionId}/explain`, {
+    method: "POST",
+    body: JSON.stringify({ statement }),
+  });
+}
+
 function getWebSocketBase() {
   if (API_BASE) {
     return API_BASE.replace(/^http/, "ws");

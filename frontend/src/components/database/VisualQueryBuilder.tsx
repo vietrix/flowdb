@@ -1,5 +1,5 @@
-import { useState, useCallback, useRef, useEffect } from "react";
-import { Plus, Trash2, Play, Table, Filter, Columns, SortAsc, Combine, X } from "lucide-react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { Plus, Play, Table, Filter, Columns, SortAsc, Combine, X, Copy, FlaskConical, Sparkles } from "lucide-react";
 
 interface QueryBlock {
   id: string;
@@ -12,6 +12,13 @@ interface Connection {
   id: string;
   from: string;
   to: string;
+}
+
+interface VisualQueryBuilderProps {
+  dialect?: "sql" | "mongodb";
+  onInsertQuery?: (query: string) => void;
+  onRunQuery?: (query: string) => void;
+  onExplainQuery?: (query: string) => void;
 }
 
 const blockTypes = [
@@ -187,7 +194,12 @@ function BlockNode({
   );
 }
 
-export function VisualQueryBuilder() {
+export function VisualQueryBuilder({
+  dialect = "sql",
+  onInsertQuery,
+  onRunQuery,
+  onExplainQuery,
+}: VisualQueryBuilderProps) {
   const [blocks, setBlocks] = useState<QueryBlock[]>([
     { id: "1", type: "table", position: { x: 100, y: 100 }, data: { tableName: "users" } },
     { id: "2", type: "select", position: { x: 100, y: 250 }, data: { columns: "*" } },
@@ -250,54 +262,66 @@ export function VisualQueryBuilder() {
     setConnectingFrom(null);
   };
 
-  const generateQuery = () => {
-    // Simple query generation based on blocks and connections
-    const visited = new Set<string>();
+  const generateSQL = useCallback(() => {
     const parts: string[] = [];
-    
-    // Find starting blocks (tables)
     const tableBlocks = blocks.filter(b => b.type === "table");
-    
     tableBlocks.forEach(table => {
       if (table.data.tableName) {
         parts.push(`FROM ${table.data.tableName}`);
       }
     });
-
-    // Find select blocks
     const selectBlocks = blocks.filter(b => b.type === "select");
     if (selectBlocks.length > 0 && selectBlocks[0].data.columns) {
       parts.unshift(`SELECT ${selectBlocks[0].data.columns}`);
     } else {
       parts.unshift("SELECT *");
     }
-
-    // Find filter blocks
     const filterBlocks = blocks.filter(b => b.type === "filter");
     filterBlocks.forEach(filter => {
       if (filter.data.condition) {
         parts.push(`WHERE ${filter.data.condition}`);
       }
     });
-
-    // Find join blocks
     const joinBlocks = blocks.filter(b => b.type === "join");
     joinBlocks.forEach(join => {
       if (join.data.joinTable && join.data.onCondition) {
         parts.push(`JOIN ${join.data.joinTable} ON ${join.data.onCondition}`);
       }
     });
-
-    // Find sort blocks
     const sortBlocks = blocks.filter(b => b.type === "sort");
     sortBlocks.forEach(sort => {
       if (sort.data.orderBy) {
         parts.push(`ORDER BY ${sort.data.orderBy}`);
       }
     });
-
     return parts.join("\n");
-  };
+  }, [blocks]);
+
+  const generateMongo = useCallback(() => {
+    const table = blocks.find(b => b.type === "table")?.data.tableName || "collection";
+    const filter = blocks.find(b => b.type === "filter")?.data.condition || "";
+    const select = blocks.find(b => b.type === "select")?.data.columns || "";
+    const sort = blocks.find(b => b.type === "sort")?.data.orderBy || "";
+    const doc: Record<string, unknown> = {
+      find: table,
+      filter: filter ? { $where: filter } : {},
+    };
+    if (select) {
+      doc.projection = select.split(",").reduce<Record<string, number>>((acc, key) => {
+        const k = key.trim();
+        if (k) acc[k] = 1;
+        return acc;
+      }, {});
+    }
+    if (sort) {
+      doc.sort = { [sort]: 1 };
+    }
+    return JSON.stringify(doc, null, 2);
+  }, [blocks]);
+
+  const queryPreview = useMemo(() => {
+    return dialect === "mongodb" ? generateMongo() : generateSQL();
+  }, [dialect, generateMongo, generateSQL]);
 
   const getBlockCenter = (block: QueryBlock, isBottom: boolean) => {
     return {
@@ -308,9 +332,8 @@ export function VisualQueryBuilder() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Toolbar */}
-      <div className="flex items-center gap-2 p-2 border-b bg-secondary/30">
-        <span className="text-xs text-muted-foreground mr-2">Add Block:</span>
+      <div className="flex flex-wrap items-center gap-2 p-2 border-b bg-secondary/30">
+        <span className="text-xs text-muted-foreground mr-2">Blocks:</span>
         {blockTypes.map(({ type, label, icon: Icon, color }) => (
           <button
             key={type}
@@ -322,111 +345,140 @@ export function VisualQueryBuilder() {
           </button>
         ))}
         <div className="flex-1" />
-        <button
-          className="toolbar-button bg-primary text-primary-foreground"
-          onClick={() => {
-            const query = generateQuery();
-            console.log("Generated Query:\n", query);
-            alert("Generated Query:\n\n" + query);
-          }}
-        >
-          <Play size={14} />
-          Generate SQL
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            className="toolbar-button"
+            onClick={() => navigator.clipboard.writeText(queryPreview)}
+          >
+            <Copy size={12} />
+            Copy
+          </button>
+          <button
+            className="toolbar-button bg-primary text-primary-foreground"
+            onClick={() => onInsertQuery?.(queryPreview)}
+            disabled={!onInsertQuery}
+          >
+            <Sparkles size={12} />
+            Insert
+          </button>
+          <button
+            className="toolbar-button"
+            onClick={() => onExplainQuery?.(queryPreview)}
+            disabled={!onExplainQuery}
+          >
+            <FlaskConical size={12} />
+            Explain
+          </button>
+          <button
+            className="toolbar-button bg-primary text-primary-foreground"
+            onClick={() => onRunQuery?.(queryPreview)}
+            disabled={!onRunQuery}
+          >
+            <Play size={12} />
+            Run
+          </button>
+        </div>
       </div>
 
-      {/* Canvas */}
-      <div 
-        ref={canvasRef}
-        className="flex-1 relative overflow-auto"
-        style={{ background: "hsl(var(--workspace-bg))" }}
-        onMouseMove={handleCanvasMouseMove}
-        onMouseUp={handleCanvasMouseUp}
-      >
-        {/* Grid pattern */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30">
-          <defs>
-            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-muted-foreground" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-        </svg>
+      <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+        <div className="flex-1 relative overflow-hidden border-r">
+          <div
+            ref={canvasRef}
+            className="absolute inset-0 overflow-auto"
+            style={{ background: "hsl(var(--workspace-bg))" }}
+            onMouseMove={handleCanvasMouseMove}
+            onMouseUp={handleCanvasMouseUp}
+          >
+            <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30">
+              <defs>
+                <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                  <path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-muted-foreground" />
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#grid)" />
+            </svg>
 
-        {/* Connection lines */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none">
-          <defs>
-            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-              <polygon points="0 0, 10 3.5, 0 7" className="fill-primary" />
-            </marker>
-          </defs>
-          {connections.map(conn => {
-            const fromBlock = blocks.find(b => b.id === conn.from);
-            const toBlock = blocks.find(b => b.id === conn.to);
-            if (!fromBlock || !toBlock) return null;
-            
-            const from = getBlockCenter(fromBlock, true);
-            const to = getBlockCenter(toBlock, false);
-            
-            // Curved path
-            const midY = (from.y + to.y) / 2;
-            const path = `M ${from.x} ${from.y} C ${from.x} ${midY}, ${to.x} ${midY}, ${to.x} ${to.y - 8}`;
-            
-            return (
-              <path
-                key={conn.id}
-                d={path}
-                fill="none"
-                className="stroke-primary"
-                strokeWidth="2"
-                markerEnd="url(#arrowhead)"
+            <svg className="absolute inset-0 w-full h-full pointer-events-none">
+              <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7" className="fill-primary" />
+                </marker>
+              </defs>
+              {connections.map(conn => {
+                const fromBlock = blocks.find(b => b.id === conn.from);
+                const toBlock = blocks.find(b => b.id === conn.to);
+                if (!fromBlock || !toBlock) return null;
+                const from = getBlockCenter(fromBlock, true);
+                const to = getBlockCenter(toBlock, false);
+                const midY = (from.y + to.y) / 2;
+                const path = `M ${from.x} ${from.y} C ${from.x} ${midY}, ${to.x} ${midY}, ${to.x} ${to.y - 8}`;
+                return (
+                  <path
+                    key={conn.id}
+                    d={path}
+                    fill="none"
+                    className="stroke-primary"
+                    strokeWidth="2"
+                    markerEnd="url(#arrowhead)"
+                  />
+                );
+              })}
+              {connectingFrom && (() => {
+                const fromBlock = blocks.find(b => b.id === connectingFrom);
+                if (!fromBlock) return null;
+                const from = getBlockCenter(fromBlock, true);
+                return (
+                  <line
+                    x1={from.x}
+                    y1={from.y}
+                    x2={mousePos.x}
+                    y2={mousePos.y}
+                    className="stroke-primary"
+                    strokeWidth="2"
+                    strokeDasharray="5,5"
+                  />
+                );
+              })()}
+            </svg>
+
+            {blocks.map(block => (
+              <BlockNode
+                key={block.id}
+                block={block}
+                isSelected={selectedBlock === block.id}
+                onSelect={setSelectedBlock}
+                onDrag={updateBlockPosition}
+                onDelete={deleteBlock}
+                onStartConnect={startConnect}
+                onEndConnect={endConnect}
+                onUpdateData={updateBlockData}
               />
-            );
-          })}
-          
-          {/* Drawing line when connecting */}
-          {connectingFrom && (() => {
-            const fromBlock = blocks.find(b => b.id === connectingFrom);
-            if (!fromBlock) return null;
-            const from = getBlockCenter(fromBlock, true);
-            return (
-              <line
-                x1={from.x}
-                y1={from.y}
-                x2={mousePos.x}
-                y2={mousePos.y}
-                className="stroke-primary"
-                strokeWidth="2"
-                strokeDasharray="5,5"
-              />
-            );
-          })()}
-        </svg>
+            ))}
 
-        {/* Blocks */}
-        {blocks.map(block => (
-          <BlockNode
-            key={block.id}
-            block={block}
-            isSelected={selectedBlock === block.id}
-            onSelect={setSelectedBlock}
-            onDrag={updateBlockPosition}
-            onDelete={deleteBlock}
-            onStartConnect={startConnect}
-            onEndConnect={endConnect}
-            onUpdateData={updateBlockData}
-          />
-        ))}
-
-        {/* Empty state */}
-        {blocks.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-            <div className="text-center">
-              <Plus className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>Click a block type above to start building your query</p>
-            </div>
+            {blocks.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
+                <div className="text-center">
+                  <Plus className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>Click a block type above to start building your query</p>
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
+
+        <aside className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l bg-card flex flex-col">
+          <div className="px-3 py-2 border-b text-xs uppercase tracking-wide text-muted-foreground">
+            Query Preview
+          </div>
+          <div className="flex-1 overflow-auto p-3">
+            <pre className="text-xs whitespace-pre-wrap bg-secondary/30 border rounded p-3">
+              {queryPreview}
+            </pre>
+          </div>
+          <div className="px-3 py-2 border-t flex items-center gap-2 text-xs text-muted-foreground">
+            Dialect: <span className="font-medium text-foreground">{dialect === "mongodb" ? "Mongo DSL" : "SQL"}</span>
+          </div>
+        </aside>
       </div>
     </div>
   );

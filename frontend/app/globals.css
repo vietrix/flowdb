@@ -248,4 +248,23 @@
   .dropdown-select {
     @apply px-2 py-1 text-sm border rounded bg-background;
   }
+
+  @media (max-width: 768px) {
+    .app-topbar {
+      @apply h-auto flex-wrap gap-2 py-2;
+    }
+
+    .toolbar-button {
+      @apply px-2 py-1 text-xs;
+    }
+
+    .tab-button {
+      @apply px-3;
+    }
+
+    .data-table th,
+    .data-table td {
+      @apply px-2;
+    }
+  }
 }

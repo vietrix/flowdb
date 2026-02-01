@@ -105,6 +105,7 @@ export function DatabaseApp() {
         <div className="flex-1 flex flex-col overflow-hidden">
           <Workspace
             connectionId={selectedConnectionId}
+            connectionType={selectedConnection?.type || null}
             selectedNamespace={selectedItem?.namespace || null}
             selectedEntity={selectedItem?.type === "table" || selectedItem?.type === "view" ? selectedItem.name : null}
             onLog={addLog}

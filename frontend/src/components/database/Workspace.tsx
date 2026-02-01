@@ -1,31 +1,41 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { DataViewer } from "./DataViewer";
 import { QueryEditor } from "./QueryEditor";
 import { StructureView } from "./StructureView";
 import { VisualQueryBuilder } from "./VisualQueryBuilder";
-import { browseEntity, getEntityInfo, runQuery } from "@/lib/api";
+import { browseEntity, explainQuery, getEntityInfo, runQuery } from "@/lib/api";
 
 type TabType = "data" | "query" | "visual" | "structure";
 
 interface WorkspaceProps {
   connectionId: string | null;
+  connectionType: string | null;
   selectedNamespace: string | null;
   selectedEntity: string | null;
   onLog: (entry: { type: "query" | "error" | "info"; message: string; duration?: number }) => void;
 }
 
-export function Workspace({ connectionId, selectedNamespace, selectedEntity, onLog }: WorkspaceProps) {
+export function Workspace({ connectionId, connectionType, selectedNamespace, selectedEntity, onLog }: WorkspaceProps) {
   const [activeTab, setActiveTab] = useState<TabType>("data");
   const [currentPage, setCurrentPage] = useState(1);
   const [columns, setColumns] = useState<{ key: string; label: string }[]>([]);
   const [rows, setRows] = useState<Record<string, unknown>[]>([]);
   const [totalRows, setTotalRows] = useState(0);
+  const [queryDraft, setQueryDraft] = useState("SELECT * FROM users LIMIT 10;");
+  const [runToken, setRunToken] = useState(0);
+  const [explainToken, setExplainToken] = useState(0);
   const [structure, setStructure] = useState<
     { name: string; type: string; nullable: boolean; defaultValue: string | null; isPrimaryKey: boolean; isIndexed: boolean }[]
   >([]);
 
   const tableName = selectedEntity || "table";
   const canLoad = Boolean(connectionId && selectedNamespace && selectedEntity);
+  const qualifiedName = useMemo(() => {
+    if (!selectedEntity) return "table";
+    if (connectionType === "mongodb") return selectedEntity;
+    if (selectedNamespace) return `${selectedNamespace}.${selectedEntity}`;
+    return selectedEntity;
+  }, [connectionType, selectedEntity, selectedNamespace]);
 
   const handleExecuteQuery = async (queryText: string) => {
     if (!connectionId) return { status: "no_connection" };
@@ -42,6 +52,18 @@ export function Workspace({ connectionId, selectedNamespace, selectedEntity, onL
       return { status: "error" };
     }
   };
+
+  const handleExplain = useCallback(async (queryText: string) => {
+    if (!connectionId) return null;
+    try {
+      const result = await explainQuery(connectionId, queryText);
+      onLog({ type: "info", message: "Explain completed." });
+      return result;
+    } catch (err) {
+      onLog({ type: "error", message: (err as Error).message || "Explain thất bại." });
+      return null;
+    }
+  }, [connectionId, onLog]);
 
   const loadData = useCallback(async (page: number) => {
     if (!canLoad) return;
@@ -113,6 +135,17 @@ export function Workspace({ connectionId, selectedNamespace, selectedEntity, onL
     }
   }, [canLoad]);
 
+  useEffect(() => {
+    if (!selectedEntity) return;
+    if (connectionType === "mongodb") {
+      setQueryDraft(
+        JSON.stringify({ find: selectedEntity, filter: {}, limit: 100 }, null, 2)
+      );
+    } else {
+      setQueryDraft(`SELECT * FROM ${qualifiedName} LIMIT 100;`);
+    }
+  }, [connectionType, qualifiedName, selectedEntity]);
+
   const tabs: { id: TabType; label: string }[] = [
     { id: "data", label: "Data" },
     { id: "query", label: "Query" },
@@ -144,15 +177,56 @@ export function Workspace({ connectionId, selectedNamespace, selectedEntity, onL
           totalRows={totalRows}
           onPageChange={setCurrentPage}
           onRefresh={() => loadData(currentPage)}
+          onOpenQuery={() => {
+            setQueryDraft(
+              connectionType === "mongodb"
+                ? JSON.stringify({ find: tableName, filter: {}, limit: 100 }, null, 2)
+                : `SELECT * FROM ${qualifiedName} LIMIT 100;`
+            );
+            setActiveTab("query");
+          }}
+          onOpenVisual={() => setActiveTab("visual")}
+          onExplain={() => {
+            setQueryDraft(
+              connectionType === "mongodb"
+                ? JSON.stringify({ find: tableName, filter: {}, limit: 100 }, null, 2)
+                : `SELECT * FROM ${qualifiedName} LIMIT 100;`
+            );
+            setActiveTab("query");
+            setExplainToken((prev) => prev + 1);
+          }}
         />
       )}
       
       {activeTab === "query" && (
-        <QueryEditor onExecute={handleExecuteQuery} />
+        <QueryEditor
+          query={queryDraft}
+          onQueryChange={setQueryDraft}
+          onExecute={handleExecuteQuery}
+          onExplain={handleExplain}
+          runToken={runToken}
+          explainToken={explainToken}
+        />
       )}
 
       {activeTab === "visual" && (
-        <VisualQueryBuilder />
+        <VisualQueryBuilder
+          dialect={connectionType === "mongodb" ? "mongodb" : "sql"}
+          onInsertQuery={(queryText) => {
+            setQueryDraft(queryText);
+            setActiveTab("query");
+          }}
+          onRunQuery={(queryText) => {
+            setQueryDraft(queryText);
+            setActiveTab("query");
+            setRunToken((prev) => prev + 1);
+          }}
+          onExplainQuery={(queryText) => {
+            setQueryDraft(queryText);
+            setActiveTab("query");
+            setExplainToken((prev) => prev + 1);
+          }}
+        />
       )}
       
       {activeTab === "structure" && (
