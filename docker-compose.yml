@@ -9,6 +9,8 @@ services:
       BIND_ADDR: 0.0.0.0:8080
       CORS_ALLOW_ORIGINS: http://localhost:3000
       ALLOW_INSECURE_COOKIES: "true"
+      DOCKER_MODE: "true"
+      DOCKER_HOST_GATEWAY: host.docker.internal
       ADMIN_USER: admin
       ADMIN_PASS: admin
       MONGO_URI: mongodb://sample-mongodb:27017

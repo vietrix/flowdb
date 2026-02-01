@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"flowdb/backend/adapters"
@@ -42,8 +43,9 @@ func (s *Service) GetAdapter(ctx context.Context, conn store.Connection) (adapte
 	}
 	switch conn.Type {
 	case "postgres":
+		host := normalizeHost(conn.Host)
 		return postgres.New(ctx, postgres.Config{
-			Host:     conn.Host,
+			Host:     host,
 			Port:     conn.Port,
 			Database: conn.Database,
 			User:     conn.Username,
@@ -53,12 +55,12 @@ func (s *Service) GetAdapter(ctx context.Context, conn store.Connection) (adapte
 	case "mongodb":
 		uri := conn.Host
 		if uri == "" {
-			uri = "mongodb://localhost:27017"
+			uri = "mongodb://" + normalizeHost("localhost") + ":27017"
 		}
 		if !strings.HasPrefix(uri, "mongodb://") && !strings.HasPrefix(uri, "mongodb+srv://") {
-			host := conn.Host
+			host := normalizeHost(conn.Host)
 			if conn.Port > 0 {
-				host = fmt.Sprintf("%s:%d", conn.Host, conn.Port)
+				host = fmt.Sprintf("%s:%d", host, conn.Port)
 			}
 			uri = "mongodb://" + host
 		}
@@ -69,4 +71,20 @@ func (s *Service) GetAdapter(ctx context.Context, conn store.Connection) (adapte
 	default:
 		return nil, errors.New("unsupported connection type")
 	}
+}
+
+func normalizeHost(host string) string {
+	lower := strings.ToLower(strings.TrimSpace(host))
+	if lower == "" {
+		return host
+	}
+	if lower == "localhost" || lower == "127.0.0.1" || lower == "::1" {
+		if gw := os.Getenv("DOCKER_HOST_GATEWAY"); gw != "" {
+			return gw
+		}
+		if os.Getenv("DOCKER_MODE") == "true" {
+			return "host.docker.internal"
+		}
+	}
+	return host
 }
