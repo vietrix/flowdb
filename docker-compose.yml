@@ -1,8 +1,7 @@
 version: "3.9"
 services:
   app:
-    build: .
-    image: ${FLOWDB_BACKEND_IMAGE:-flowdb-backend:latest}
+    image: ${FLOWDB_BACKEND_IMAGE:-ghcr.io/vietrix/flowdb-backend:latest}
     environment:
       DATABASE_URL: postgres://flowdb:flowdb@meta-postgres:5432/flowdb?sslmode=disable
       MASTER_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
@@ -23,12 +22,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_API_BASE: http://localhost:8080
-    image: ${FLOWDB_FRONTEND_IMAGE:-flowdb-frontend:latest}
+    image: ${FLOWDB_FRONTEND_IMAGE:-ghcr.io/vietrix/flowdb-frontend:latest}
     environment:
       NEXT_PUBLIC_API_BASE: http://localhost:8080
       PORT: "3000"

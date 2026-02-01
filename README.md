@@ -1,12 +1,26 @@
 # FlowDB Backend
 
-## Cách chạy
+## Cách chạy (chỉ cần Docker)
+
+### 1) Chạy nhanh (một lệnh)
 
 ```bash
-docker compose up --build
+docker run -d --name flowdb \
+  -p 8080:8080 \
+  -e DATABASE_URL="postgres://flowdb:flowdb@HOST:5432/flowdb?sslmode=disable" \
+  -e MASTER_KEY="BASE64_32_BYTES" \
+  -e ADMIN_USER="admin" \
+  -e ADMIN_PASS="admin" \
+  ghcr.io/vietrix/flowdb-backend:latest
 ```
 
-Mặc định API lắng nghe tại `http://127.0.0.1:8080`.
+### 2) Dùng Docker Compose (frontend + backend)
+
+```bash
+docker compose up -d
+```
+
+Mặc định API lắng nghe tại `http://127.0.0.1:8080`, UI tại `http://127.0.0.1:3000`.
 
 ## Biến môi trường chính
 
@@ -48,12 +62,15 @@ ssh -L 8080:127.0.0.1:8080 user@server
 Workflow:
 - `.github/workflows/ci.yml`: chạy `go test ./...` và `pnpm lint` cho frontend.
 - `.github/workflows/release.yml`: khi push tag `v*` sẽ build binary đa nền tảng và tạo GitHub Release kèm file `.sha256`.
+- `.github/workflows/docker.yml`: build & push image `ghcr.io/vietrix/flowdb-backend` và `ghcr.io/vietrix/flowdb-frontend` khi push `main` hoặc tag `v*`.
 
 ## Tạo repo bằng GitHub CLI và push
 
 ```bash
 gh auth login
 gh repo create vietrix/flowdb --public --source . --remote origin --push
+git branch -M main
+git push -u origin main
 ```
 
 Tạo release:
