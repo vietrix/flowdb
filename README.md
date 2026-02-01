@@ -7,10 +7,10 @@
 ```bash
 docker run -d --name flowdb \
   -p 8080:8080 \
-  -e DATABASE_URL="postgres://flowdb:flowdb@HOST:5432/flowdb?sslmode=disable" \
-  -e MASTER_KEY="BASE64_32_BYTES" \
-  -e ADMIN_USER="admin" \
-  -e ADMIN_PASS="admin" \
+  -e DATABASE_URL="postgres://<user>:<pass>@<host>:5432/flowdb?sslmode=disable" \
+  -e MASTER_KEY="<BASE64_32_BYTES>" \
+  -e ADMIN_USER="<admin_user>" \
+  -e ADMIN_PASS="<strong_password>" \
   ghcr.io/vietrix/flowdb-backend:latest
 ```
 
@@ -21,6 +21,8 @@ docker compose up -d
 ```
 
 Mặc định API lắng nghe tại `http://127.0.0.1:8080`, UI tại `http://127.0.0.1:3000`.
+
+Lưu ý: bạn bắt buộc phải set `DATABASE_URL`, `MASTER_KEY`, `ADMIN_USER`, `ADMIN_PASS` bằng biến môi trường (ví dụ file `.env`) trước khi chạy compose.
 
 ## Biến môi trường chính
 

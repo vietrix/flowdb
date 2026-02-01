@@ -3,15 +3,15 @@ services:
   app:
     image: ${FLOWDB_BACKEND_IMAGE:-ghcr.io/vietrix/flowdb-backend:latest}
     environment:
-      DATABASE_URL: postgres://flowdb:flowdb@meta-postgres:5432/flowdb?sslmode=disable
-      MASTER_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+      DATABASE_URL: ${DATABASE_URL}
+      MASTER_KEY: ${MASTER_KEY}
       BIND_ADDR: 0.0.0.0:8080
       CORS_ALLOW_ORIGINS: http://localhost:3000
       ALLOW_INSECURE_COOKIES: "true"
       DOCKER_MODE: "true"
       DOCKER_HOST_GATEWAY: host.docker.internal
-      ADMIN_USER: admin
-      ADMIN_PASS: admin
+      ADMIN_USER: ${ADMIN_USER}
+      ADMIN_PASS: ${ADMIN_PASS}
       MONGO_URI: mongodb://sample-mongodb:27017
       AUTO_MIGRATE: "true"
     ports:
