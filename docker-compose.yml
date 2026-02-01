@@ -1,0 +1,50 @@
+version: "3.9"
+services:
+  app:
+    build: .
+    image: flowdb-backend:latest
+    environment:
+      DATABASE_URL: postgres://flowdb:flowdb@meta-postgres:5432/flowdb?sslmode=disable
+      MASTER_KEY: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+      BIND_ADDR: 0.0.0.0:8080
+      ADMIN_USER: admin
+      ADMIN_PASS: admin
+      MONGO_URI: mongodb://sample-mongodb:27017
+      AUTO_MIGRATE: "true"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - meta-postgres
+      - sample-mongodb
+    restart: unless-stopped
+
+  meta-postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: flowdb
+      POSTGRES_USER: flowdb
+      POSTGRES_PASSWORD: flowdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - flowdb_meta:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  sample-postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: sample
+      POSTGRES_USER: sample
+      POSTGRES_PASSWORD: sample
+    ports:
+      - "5433:5432"
+    restart: unless-stopped
+
+  sample-mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    restart: unless-stopped
+
+volumes:
+  flowdb_meta:
