@@ -20,8 +20,8 @@ func NewRouter(h *handlers.Handler, cfg *config.Config, settingsStore *settings.
 	if len(cfg.CORSAllowOrigins) > 0 {
 		r.Use(middleware.CORS(cfg.CORSAllowOrigins))
 	}
-	r.Get("/healthz", h.Healthz)
-	r.Get("/readyz", h.Readyz)
+	r.Get("/health", h.Healthz)
+	r.Get("/ready", h.Readyz)
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(middleware.SecurityControls(settingsStore, cfg.TrustedMTLSHeader))
 		r.Route("/auth", func(r chi.Router) {

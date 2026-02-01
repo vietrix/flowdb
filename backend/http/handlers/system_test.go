@@ -6,9 +6,9 @@ import (
 	"testing"
 )
 
-func TestHealthz(t *testing.T) {
+func TestHealth(t *testing.T) {
 	h := &Handler{}
-	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()
 	h.Healthz(rec, req)
 	if rec.Code != http.StatusOK {
