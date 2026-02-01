@@ -14,6 +14,7 @@ import (
 	"flowdb/backend/settings"
 	"flowdb/backend/store"
 	"flowdb/backend/stream"
+	"flowdb/backend/update"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"golang.org/x/oauth2"
@@ -32,6 +33,7 @@ type Handler struct {
 	Logger       *slog.Logger
 	Stream       *stream.Manager
 	JobStore     *query.JobStore
+	Update       *update.Service
 	OIDC         *oidc.Provider
 	OIDCConfig   *oauth2.Config
 	OIDCVerifier *oidc.IDTokenVerifier

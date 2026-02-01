@@ -26,6 +26,10 @@ Mặc định API lắng nghe tại `http://127.0.0.1:8080`.
 - `LOGIN_RATE_LIMIT_PER_MIN`, `LOGIN_RATE_LIMIT_BURST`: rate limit đăng nhập.
 - `GLOBAL_MAX_ROWS`: giới hạn số dòng mặc định.
 - `STATEMENT_TIMEOUT`: timeout mặc định cho query.
+- `UPDATE_REPO`: repo GitHub để kiểm tra update.
+- `UPDATE_CHECK_INTERVAL`: chu kỳ kiểm tra bản mới.
+- `UPDATE_GITHUB_TOKEN`: token GitHub để tránh rate limit.
+- `UPDATE_AUTO_RESTART`: tự restart sau khi cập nhật.
 
 ## Ví dụ SSH port-forward
 
@@ -38,3 +42,40 @@ ssh -L 8080:127.0.0.1:8080 user@server
 - Đặt proxy (Nginx/Traefik) phía trước để terminate TLS.
 - Nếu bật mTLS, cấu hình proxy thêm header `X-Client-Cert-Verified: true` khi client cert hợp lệ.
 - Đảm bảo forward `X-Request-ID` nếu bạn muốn trace thống nhất.
+
+## CI/CD và phát hành
+
+Workflow:
+- `.github/workflows/ci.yml`: chạy `go test ./...` và `pnpm lint` cho frontend.
+- `.github/workflows/release.yml`: khi push tag `v*` sẽ build binary đa nền tảng và tạo GitHub Release kèm file `.sha256`.
+
+## Tạo repo bằng GitHub CLI và push
+
+```bash
+gh auth login
+gh repo create vietrix/flowdb --public --source . --remote origin --push
+```
+
+Tạo release:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+## Hệ thống auto-update qua GitHub Release
+
+API:
+- `GET /api/v1/system/version`: trả phiên bản đang chạy.
+- `GET /api/v1/system/update`: kiểm tra bản mới (admin).
+- `POST /api/v1/system/update/apply`: tải và cài bản mới (admin).
+
+Biến môi trường:
+- `UPDATE_REPO`: repo GitHub (mặc định `vietrix/flowdb`).
+- `UPDATE_CHECK_INTERVAL`: chu kỳ cache kiểm tra (mặc định `5m`).
+- `UPDATE_GITHUB_TOKEN`: token để tránh rate limit (khuyến nghị).
+- `UPDATE_AUTO_RESTART`: `true` để tự restart sau khi cập nhật.
+
+Ghi chú:
+- Update sử dụng asset từ GitHub Release theo tên: `flowdb_<os>_<arch>.(tar.gz|zip)` và `.sha256`.
+- Khi `UPDATE_AUTO_RESTART=true`, server sẽ tự thoát sau khi cập nhật để tiến trình/compose khởi động lại.

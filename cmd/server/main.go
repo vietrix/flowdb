@@ -25,6 +25,8 @@ import (
 	"flowdb/backend/settings"
 	"flowdb/backend/store"
 	"flowdb/backend/stream"
+	"flowdb/backend/update"
+	"flowdb/backend/util"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -99,6 +101,7 @@ func main() {
 	auditLogger := audit.NewLogger(st, settingsStore)
 	streamManager := stream.NewManager()
 	jobStore := query.NewJobStore(10 * time.Minute)
+	updateService := update.NewService(cfg.UpdateRepo, util.Version, cfg.UpdateCheckInterval, cfg.UpdateToken)
 
 	var oidcProvider *oidc.Provider
 	var oidcConfig *oauth2.Config
@@ -132,6 +135,7 @@ func main() {
 		Logger:       logger,
 		Stream:       streamManager,
 		JobStore:     jobStore,
+		Update:       updateService,
 		OIDC:         oidcProvider,
 		OIDCConfig:   oidcConfig,
 		OIDCVerifier: oidcVerifier,

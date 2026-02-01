@@ -40,6 +40,10 @@ type Config struct {
 	StatementTimeout     time.Duration
 	AllowInsecureCookies bool
 	TrustedMTLSHeader    string
+	UpdateRepo           string
+	UpdateCheckInterval  time.Duration
+	UpdateToken          string
+	UpdateAutoRestart    bool
 }
 
 func Load() (*Config, error) {
@@ -69,6 +73,10 @@ func Load() (*Config, error) {
 		StatementTimeout:     envDuration("STATEMENT_TIMEOUT", 30*time.Second),
 		AllowInsecureCookies: envBool("ALLOW_INSECURE_COOKIES", false),
 		TrustedMTLSHeader:    envOrDefault("MTLS_TRUSTED_HEADER", "X-Client-Cert-Verified"),
+		UpdateRepo:           envOrDefault("UPDATE_REPO", "vietrix/flowdb"),
+		UpdateCheckInterval:  envDuration("UPDATE_CHECK_INTERVAL", 5*time.Minute),
+		UpdateToken:          os.Getenv("UPDATE_GITHUB_TOKEN"),
+		UpdateAutoRestart:    envBool("UPDATE_AUTO_RESTART", true),
 	}
 
 	if cors := os.Getenv("CORS_ALLOW_ORIGINS"); cors != "" {

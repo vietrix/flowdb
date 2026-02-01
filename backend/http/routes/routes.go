@@ -62,6 +62,10 @@ func NewRouter(h *handlers.Handler, cfg *config.Config, settingsStore *settings.
 		r.With(middleware.RequireAuth(h.Store, h.Sessions)).Get("/history", h.ListHistory)
 		r.With(middleware.RequireAuth(h.Store, h.Sessions)).Get("/audit", h.ListAudit)
 
+		r.With(middleware.RequireAuth(h.Store, h.Sessions)).Get("/system/version", h.Version)
+		r.With(middleware.RequireAuth(h.Store, h.Sessions)).Get("/system/update", h.UpdateStatus)
+		r.With(middleware.RequireAuth(h.Store, h.Sessions), middleware.CSRF(cfg.CSRFHeaderName)).Post("/system/update/apply", h.UpdateApply)
+
 		r.With(middleware.RequireAuth(h.Store, h.Sessions)).Get("/scim/Users", h.ListSCIMUsers)
 		r.With(middleware.RequireAuth(h.Store, h.Sessions)).Get("/scim/Groups", h.ListSCIMGroups)
 	})

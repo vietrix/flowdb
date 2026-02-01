@@ -5,7 +5,10 @@ RUN go mod download
 COPY cmd ./cmd
 COPY backend ./backend
 COPY migrations ./migrations
-RUN CGO_ENABLED=0 go build -o /out/flowdb ./cmd/server
+ARG VERSION=dev
+ARG COMMIT=unknown
+ARG BUILD_TIME=unknown
+RUN CGO_ENABLED=0 go build -ldflags "-X flowdb/backend/util.Version=${VERSION} -X flowdb/backend/util.CommitSHA=${COMMIT} -X flowdb/backend/util.BuildTime=${BUILD_TIME}" -o /out/flowdb ./cmd/server
 
 FROM alpine:3.19
 RUN apk add --no-cache ca-certificates

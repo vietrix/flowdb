@@ -15,6 +15,7 @@ Vui lòng báo cáo lỗ hổng bảo mật qua kênh nội bộ/issue private c
 - Sao lưu PostgreSQL metadata định kỳ.
 - Giới hạn network access cho PostgreSQL/MongoDB.
 - Thiết lập giám sát và alert cho audit log.
+- Nếu bật auto-update, cấu hình `UPDATE_GITHUB_TOKEN` và chỉ dùng release chính thức.
 
 ## Bật chế độ enterprise
 
