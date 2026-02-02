@@ -1,0 +1,52 @@
+name: "🐞 Báo lỗi"
+description: "Báo cáo lỗi để giúp chúng tôi cải thiện FlowDB"
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: checkboxes
+    attributes:
+      label: "Đã kiểm tra issue hiện có?"
+      description: "Vui lòng tìm kiếm trước khi mở issue mới."
+      options:
+        - label: "Tôi đã tìm kiếm trong các issue hiện có"
+          required: true
+  - type: textarea
+    attributes:
+      label: "Mô tả lỗi"
+      description: "Mô tả ngắn gọn lỗi bạn gặp phải."
+      placeholder: "Ví dụ: UI không tải khi đăng nhập..."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: "Các bước tái hiện"
+      description: "Liệt kê các bước để tái hiện lỗi."
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: "Kết quả kỳ vọng"
+      description: "Bạn kỳ vọng điều gì xảy ra?"
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: "Môi trường"
+      description: "Thông tin hệ thống và phiên bản."
+      value: |
+        - OS:
+        - Docker:
+        - FlowDB version:
+      render: markdown
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: "Log / ảnh chụp màn hình"
+      description: "Đính kèm log hoặc ảnh chụp màn hình nếu có."
+    validations:
+      required: false

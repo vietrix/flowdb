@@ -28,11 +28,14 @@ COPY --from=build /app/package.json /app/pnpm-lock.yaml /app/next.config.mjs /ap
 COPY --from=build /app/public /app/public
 COPY --from=build /app/.next /app/.next
 COPY --from=build /app/node_modules /app/node_modules
+COPY entrypoint.sh /app/entrypoint.sh
 
+RUN chmod +x /app/entrypoint.sh
 RUN chown -R app:app /app
 
 USER app
 
 EXPOSE 3000
 
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["node_modules/.bin/next", "start", "-p", "3000"]

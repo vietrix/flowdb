@@ -1,12 +1,47 @@
-# FlowDB Backend
+# FlowDB
 
-## Cách chạy (chỉ cần Docker)
+FlowDB là dự án gồm backend Go và frontend web, tập trung vào việc vận hành FlowDB theo mô hình self-hosted. Repo này cung cấp mã nguồn, Docker image và cấu hình CI/CD để chạy nhanh trong môi trường phát triển hoặc triển khai nội bộ.
 
-### 1) Chạy nhanh (một lệnh)
+## Bắt đầu nhanh với Docker
+
+### Chạy nhanh với 2 lệnh Docker (frontend + backend)
+
+Backend:
+
+```bash
+docker run -d --name flowdb-backend \
+  -p 8080:8080 \
+  -e BIND_ADDR=0.0.0.0:8080 \
+  -e DATABASE_URL="postgres://<user>:<pass>@<host>:5432/flowdb?sslmode=disable" \
+  -e MASTER_KEY="<BASE64_32_BYTES>" \
+  -e ADMIN_USER="<admin_user>" \
+  -e ADMIN_PASS="<strong_password>" \
+  -e CORS_ALLOW_ORIGINS="http://localhost:3000" \
+  ghcr.io/vietrix/flowdb-backend:latest
+```
+
+Frontend:
+
+```bash
+docker run -d --name flowdb-frontend \
+  -p 3000:3000 \
+  -e FLOWDB_API_BASE="http://localhost:8080" \
+  ghcr.io/vietrix/flowdb-frontend:latest
+```
+
+Ghi chú:
+
+- Nếu dùng domain riêng, đổi URL thành `https://app.example.com` và `https://api.example.com`.
+- Nếu reverse proxy dùng cùng domain, bạn có thể bỏ `FLOWDB_API_BASE` để frontend gọi relative path.
+- Xem cấu hình reverse proxy trong `docs/deployment.md`.
+- CI/CD tự động build và đẩy image lên GHCR khi push `main` hoặc tag `v*` (xem `.github/workflows/docker.yml`).
+
+### Chạy nhanh backend (1 lệnh)
 
 ```bash
 docker run -d --name flowdb \
   -p 8080:8080 \
+  -e BIND_ADDR=0.0.0.0:8080 \
   -e DATABASE_URL="postgres://<user>:<pass>@<host>:5432/flowdb?sslmode=disable" \
   -e MASTER_KEY="<BASE64_32_BYTES>" \
   -e ADMIN_USER="<admin_user>" \
@@ -14,7 +49,7 @@ docker run -d --name flowdb \
   ghcr.io/vietrix/flowdb-backend:latest
 ```
 
-### 2) Dùng Docker Compose (frontend + backend)
+### Docker Compose (frontend + backend)
 
 ```bash
 docker compose up -d
@@ -22,79 +57,28 @@ docker compose up -d
 
 Mặc định API lắng nghe tại `http://127.0.0.1:8080`, UI tại `http://127.0.0.1:3000`.
 
-Lưu ý: bạn bắt buộc phải set `DATABASE_URL`, `MASTER_KEY`, `ADMIN_USER`, `ADMIN_PASS` bằng biến môi trường (ví dụ file `.env`) trước khi chạy compose.
+Lưu ý: bạn cần thiết lập `DATABASE_URL`, `MASTER_KEY`, `ADMIN_USER`, `ADMIN_PASS` (ví dụ qua file `.env`) trước khi chạy compose. Xem chi tiết trong `docs/getting-started.md`.
 
-## Biến môi trường chính
+## Cấu hình
 
-- `DATABASE_URL`: kết nối PostgreSQL metadata.
-- `MASTER_KEY`: khóa AES-GCM dạng base64 (32 bytes).
-- `BIND_ADDR`: địa chỉ bind (mặc định `127.0.0.1:8080`).
-- `ADMIN_USER`, `ADMIN_PASS`: tài khoản admin khởi tạo.
-- `MONGO_URI`: URI MongoDB mặc định.
-- `AUTO_MIGRATE`: `true` để tự chạy migration khi khởi động.
-- `CORS_ALLOW_ORIGINS`: danh sách origin, phân tách bằng dấu phẩy.
-- `OIDC_ISSUER_URL`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_REDIRECT_URL`: cấu hình OIDC.
-- `OIDC_SCOPES`: scopes OIDC (mặc định `openid,profile,email,groups`).
-- `OIDC_GROUP_CLAIM`: claim chứa nhóm (mặc định `groups`).
-- `OIDC_ADMIN_GROUP`: tên nhóm sẽ map thành admin.
-- `OIDC_ROLE_MAP`: JSON map nhóm->role (ví dụ `{"db-admin":"admin"}`).
-- `SESSION_TTL`: thời hạn session (ví dụ `24h`).
-- `LOGIN_RATE_LIMIT_PER_MIN`, `LOGIN_RATE_LIMIT_BURST`: rate limit đăng nhập.
-- `GLOBAL_MAX_ROWS`: giới hạn số dòng mặc định.
-- `STATEMENT_TIMEOUT`: timeout mặc định cho query.
-- `UPDATE_REPO`: repo GitHub để kiểm tra update.
-- `UPDATE_CHECK_INTERVAL`: chu kỳ kiểm tra bản mới.
-- `UPDATE_GITHUB_TOKEN`: token GitHub để tránh rate limit.
-- `UPDATE_AUTO_RESTART`: tự restart sau khi cập nhật.
+Danh sách biến môi trường và hướng dẫn cấu hình nằm trong `docs/configuration.md`.
 
-## Ví dụ SSH port-forward
+## Tài liệu
 
-```bash
-ssh -L 8080:127.0.0.1:8080 user@server
-```
+- `docs/README.md`: mục lục tài liệu
+- `docs/getting-started.md`: chạy local với Docker
+- `docs/configuration.md`: biến môi trường và cấu hình
+- `docs/deployment.md`: reverse proxy và triển khai
+- `docs/operations.md`: auto-update và vận hành
 
-## Reverse proxy
+## Đóng góp
 
-- Đặt proxy (Nginx/Traefik) phía trước để terminate TLS.
-- Nếu bật mTLS, cấu hình proxy thêm header `X-Client-Cert-Verified: true` khi client cert hợp lệ.
-- Đảm bảo forward `X-Request-ID` nếu bạn muốn trace thống nhất.
+Xem hướng dẫn trong `.github/contributing.md`.
 
-## CI/CD và phát hành
+## Bảo mật
 
-Workflow:
-- `.github/workflows/ci.yml`: chạy `go test ./...` và `pnpm lint` cho frontend.
-- `.github/workflows/release.yml`: khi push tag `v*` sẽ build binary đa nền tảng và tạo GitHub Release kèm file `.sha256`.
-- `.github/workflows/docker.yml`: build & push image `ghcr.io/vietrix/flowdb-backend` và `ghcr.io/vietrix/flowdb-frontend` khi push `main` hoặc tag `v*`.
+Chính sách báo cáo lỗ hổng nằm ở `.github/SECURITY.md`.
 
-## Tạo repo bằng GitHub CLI và push
+## Giấy phép
 
-```bash
-gh auth login
-gh repo create vietrix/flowdb --public --source . --remote origin --push
-git branch -M main
-git push -u origin main
-```
-
-Tạo release:
-
-```bash
-git tag v0.1.0
-git push origin v0.1.0
-```
-
-## Hệ thống auto-update qua GitHub Release
-
-API:
-- `GET /api/v1/system/version`: trả phiên bản đang chạy.
-- `GET /api/v1/system/update`: kiểm tra bản mới (admin).
-- `POST /api/v1/system/update/apply`: tải và cài bản mới (admin).
-
-Biến môi trường:
-- `UPDATE_REPO`: repo GitHub (mặc định `vietrix/flowdb`).
-- `UPDATE_CHECK_INTERVAL`: chu kỳ cache kiểm tra (mặc định `5m`).
-- `UPDATE_GITHUB_TOKEN`: token để tránh rate limit (khuyến nghị).
-- `UPDATE_AUTO_RESTART`: `true` để tự restart sau khi cập nhật.
-
-Ghi chú:
-- Update sử dụng asset từ GitHub Release theo tên: `flowdb_<os>_<arch>.(tar.gz|zip)` và `.sha256`.
-- Khi `UPDATE_AUTO_RESTART=true`, server sẽ tự thoát sau khi cập nhật để tiến trình/compose khởi động lại.
+Xem `LICENSE`.

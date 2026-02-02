@@ -1,0 +1,36 @@
+name: "✨ Đề xuất tính năng"
+description: "Đề xuất tính năng hoặc cải tiến cho FlowDB"
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: checkboxes
+    attributes:
+      label: "Đã kiểm tra issue hiện có?"
+      description: "Vui lòng tìm kiếm trước khi mở issue mới."
+      options:
+        - label: "Tôi đã tìm kiếm trong các issue hiện có"
+          required: true
+  - type: textarea
+    attributes:
+      label: "Vấn đề bạn muốn giải quyết"
+      description: "Mô tả ngắn gọn vấn đề hoặc nhu cầu."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: "Giải pháp đề xuất"
+      description: "Mô tả giải pháp hoặc tính năng mong muốn."
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: "Giải pháp thay thế"
+      description: "Có giải pháp nào khác bạn đã thử hoặc cân nhắc?"
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: "Ngữ cảnh bổ sung"
+      description: "Thông tin bổ sung, mockup, hoặc liên kết liên quan."
+    validations:
+      required: false

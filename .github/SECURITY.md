@@ -2,19 +2,15 @@
 
 ## Chính sách disclosure
 
-Vui lòng báo cáo lỗ hổng bảo mật qua kênh nội bộ/issue private của dự án. Không công khai chi tiết trước khi có bản vá.
+Vui lòng báo cáo lỗ hổng bảo mật qua kênh riêng của dự án hoặc GitHub Security Advisories. Không công khai chi tiết trước khi có bản vá.
 
 ## Hardening checklist
 
 - Đổi `MASTER_KEY` và lưu trữ an toàn (KMS/secret manager).
-- Đổi `ADMIN_PASS` khỏi mặc định và bật MFA.
-- Bật HTTPS ở reverse proxy, bật HSTS nếu phù hợp.
-- Bật `enable_ip_allowlist` và cấu hình CIDR cần thiết.
-- Bật `enable_mtls` nếu có proxy hỗ trợ xác thực client cert.
-- Bật `enable_signed_audit_log` để chống sửa log.
-- Sao lưu PostgreSQL metadata định kỳ.
+- Đổi `ADMIN_PASS` khỏi mặc định và bật MFA nếu khả dụng.
+- Bật HTTPS ở reverse proxy và HSTS nếu phù hợp.
 - Giới hạn network access cho PostgreSQL/MongoDB.
-- Thiết lập giám sát và alert cho audit log.
+- Thiết lập giám sát và cảnh báo cho audit log.
 - Nếu bật auto-update, cấu hình `UPDATE_GITHUB_TOKEN` và chỉ dùng release chính thức.
 
 ## Bật chế độ enterprise

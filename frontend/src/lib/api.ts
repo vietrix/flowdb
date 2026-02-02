@@ -13,13 +13,41 @@ import type {
   QueryApproval,
 } from "@/lib/types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "";
+type FlowdbRuntimeConfig = {
+  apiBase?: string;
+};
+
+function getRuntimeConfig(): FlowdbRuntimeConfig {
+  if (typeof window === "undefined") {
+    return {};
+  }
+  const scopedWindow = window as Window & { __FLOWDB_CONFIG__?: FlowdbRuntimeConfig };
+  const config = scopedWindow.__FLOWDB_CONFIG__;
+  if (config && typeof config === "object") {
+    return config;
+  }
+  return {};
+}
+
+function normalizeApiBase(value: string) {
+  return value.replace(/\/$/, "");
+}
+
+function getApiBase() {
+  const runtimeBase = getRuntimeConfig().apiBase;
+  if (runtimeBase) {
+    return normalizeApiBase(runtimeBase);
+  }
+  const envBase = process.env.NEXT_PUBLIC_API_BASE || "";
+  return envBase ? normalizeApiBase(envBase) : "";
+}
 
 function buildUrl(path: string) {
-  if (!API_BASE) {
+  const apiBase = getApiBase();
+  if (!apiBase) {
     return path;
   }
-  return `${API_BASE}${path}`;
+  return `${apiBase}${path}`;
 }
 
 function getCSRFToken() {
@@ -243,8 +271,9 @@ export async function explainQuery(connectionId: string, statement: string) {
 }
 
 function getWebSocketBase() {
-  if (API_BASE) {
-    return API_BASE.replace(/^http/, "ws");
+  const apiBase = getApiBase();
+  if (apiBase) {
+    return apiBase.replace(/^http/, "ws");
   }
   if (typeof window !== "undefined") {
     return window.location.origin.replace(/^http/, "ws");
